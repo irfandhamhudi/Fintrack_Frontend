@@ -1,0 +1,10 @@
+node_modules
+dist
+backend/
+video-guide/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+
