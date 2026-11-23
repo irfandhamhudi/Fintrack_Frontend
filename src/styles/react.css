@@ -691,10 +691,20 @@ body:has(.auth-frame) {
   background: #f8fcfa;
 }
 .profile-avatar-preview {
-  flex: 0 0 auto;
+  flex: 0 0 76px;
   width: 76px;
+  min-width: 76px;
   height: 76px;
-  border-radius: 20px;
+  min-height: 76px;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 50%;
+}
+.profile-avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
 }
 .profile-avatar-button {
   min-height: 40px;
@@ -1471,10 +1481,14 @@ body:has(.auth-frame) {
   position: relative;
   left: auto;
   bottom: auto;
+  flex: 0 0 112px;
   width: 112px;
+  min-width: 112px;
   height: 112px;
+  min-height: 112px;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
-  border-radius: 50%;
+  border-radius: 50% !important;
   border: 4px solid #fff;
   box-shadow:
     0 0 0 2px #b2e6da,
@@ -1488,9 +1502,13 @@ body:has(.auth-frame) {
   background: linear-gradient(135deg, #a8ecd1, #003d44);
 }
 .settings-grid .profile-avatar-preview img {
+  display: block;
   width: 100%;
+  min-width: 100%;
   height: 100%;
-  border-radius: 50%;
+  min-height: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50% !important;
   object-fit: cover;
 }
 .settings-grid .profile-avatar-button {
@@ -2602,7 +2620,7 @@ body:has(.auth-frame) {
     height: 72px;
     overflow: hidden;
     border: 3px solid #fff;
-    border-radius: 22px;
+    border-radius: 50%;
     color: #fff;
     background: linear-gradient(135deg, #a8ecd1, #003d44);
     box-shadow: 0 0 0 2px #b2e6da;
