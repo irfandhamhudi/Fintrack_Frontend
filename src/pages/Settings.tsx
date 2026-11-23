@@ -18,18 +18,21 @@ export function Settings() {
    const [name, setName] = useState(data.profile.name),
      [email, setEmail] = useState(data.profile.email),
      [avatarUrl, setAvatarUrl] = useState(data.profile.avatarUrl ?? ""),
+     [avatarPreviewUrl, setAvatarPreviewUrl] = useState(data.profile.avatarUrl ?? ""),
      [avatarLoading, setAvatarLoading] = useState(false);
-   const initials = name
-     .trim()
-     .split(/\s+/)
-     .slice(0, 2)
-     .map((part) => part.charAt(0).toUpperCase())
-     .join("") || "FT";
+  const initials =
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join("") || "FT";
   useEffect(() => {
     setName(data.profile.name);
-    setEmail(data.profile.email);
-    setAvatarUrl(data.profile.avatarUrl ?? "");
-  }, [data.profile.name, data.profile.email, data.profile.avatarUrl]);
+     setEmail(data.profile.email);
+     setAvatarUrl(data.profile.avatarUrl ?? "");
+     setAvatarPreviewUrl(data.profile.avatarUrl ?? "");
+   }, [data.profile.name, data.profile.email, data.profile.avatarUrl]);
   const handle = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setAvatarLoading(true);
@@ -58,22 +61,25 @@ export function Settings() {
     <>
       <Heading
         title="Pengaturan Akun"
-        subtitle="Kelola tampilan profil dan data aplikasi demo."
+        subtitle="Kelola profil, privasi, dan data keuanganmu dengan mudah."
       />
       <div className="content-grid settings-grid">
-         <Panel className={`panel-inner settings-profile-panel ${dataLoading ? "settings-loading" : ""}`}>
-           <h2 className="panel-title mb-5">Informasi Profil</h2>
-           <div className="profile-avatar-upload settings-skeleton-surface">
+        <Panel
+          className={`panel-inner settings-profile-panel ${dataLoading ? "settings-loading" : ""}`}
+        >
+          <h2 className="panel-title mb-5">Informasi Profil</h2>
+          <div className="profile-avatar-upload settings-skeleton-surface">
             <div className="profile-avatar-preview">
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt="Avatar profil"
-                  onError={(event) => {
-                    event.currentTarget.style.display = "none";
-                    setAvatarUrl("");
-                  }}
-                />
+               {avatarPreviewUrl ? (
+                 <img
+                   src={avatarPreviewUrl}
+                   alt="Avatar profil"
+                   onError={(event) => {
+                     event.currentTarget.style.display = "none";
+                     setAvatarUrl("");
+                     setAvatarPreviewUrl("");
+                   }}
+                 />
               ) : (
                 <span>{initials}</span>
               )}
@@ -83,29 +89,47 @@ export function Settings() {
               {avatarLoading ? "Mengunggah…" : "Ganti avatar"}
               <input
                 type="file"
-                 accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                 hidden
                 disabled={avatarLoading}
                 onChange={async (event: ChangeEvent<HTMLInputElement>) => {
                   const file = event.target.files?.[0];
-                   if (!file) return;
-                   const allowedAvatarTypes = ["image/jpeg", "image/png", "image/webp"];
-                   const allowedAvatarExtensions = /\.(jpe?g|png|webp)$/i;
-                   if (!allowedAvatarTypes.includes(file.type) || !allowedAvatarExtensions.test(file.name)) {
-                     notify("Format avatar hanya JPG, JPEG, PNG, atau WEBP.", "error");
-                     event.target.value = "";
-                     return;
-                   }
-                   if (file.size > 8 * 1024 * 1024) {
+                  if (!file) return;
+                  const allowedAvatarTypes = [
+                    "image/jpeg",
+                    "image/png",
+                    "image/webp",
+                  ];
+                  const allowedAvatarExtensions = /\.(jpe?g|png|webp)$/i;
+                  if (
+                    !allowedAvatarTypes.includes(file.type) ||
+                    !allowedAvatarExtensions.test(file.name)
+                  ) {
+                    notify(
+                      "Format avatar hanya JPG, JPEG, PNG, atau WEBP.",
+                      "error",
+                    );
+                    event.target.value = "";
+                    return;
+                  }
+                  if (file.size > 8 * 1024 * 1024) {
                     notify("Ukuran avatar maksimal 8 MB.", "error");
                     event.target.value = "";
                     return;
                   }
                   setAvatarLoading(true);
                   try {
-                    const result = await api.upload(file, "avatar");
-                    setAvatarUrl(result.url);
-                    notify("Avatar berhasil diunggah.");
+                      const result = await api.upload(file, "avatar");
+                      const previewUrl = `${result.url}${result.url.includes("?") ? "&" : "?"}v=${Date.now()}`;
+                      setAvatarUrl(result.url);
+                      setAvatarPreviewUrl(previewUrl);
+                      await saveProfile({
+                        name: name.trim(),
+                        email: email.trim(),
+                        avatarUrl: result.url,
+                      });
+                      setAvatarPreviewUrl(previewUrl);
+                      notify("Avatar berhasil diunggah.");
                   } catch (error) {
                     notify(
                       error instanceof Error
@@ -121,8 +145,10 @@ export function Settings() {
             </label>
           </div>
           <form onSubmit={handle} className="flex flex-col gap-4">
-             <label className={`field ${dataLoading ? "settings-field-loading" : ""}`}>
-               <span>Nama lengkap</span>
+            <label
+              className={`field ${dataLoading ? "settings-field-loading" : ""}`}
+            >
+              <span>Nama lengkap</span>
               <input
                 className="input-control"
                 required
@@ -130,8 +156,10 @@ export function Settings() {
                 onChange={(e) => setName(e.target.value)}
               />
             </label>
-             <label className={`field ${dataLoading ? "settings-field-loading" : ""}`}>
-               <span>Alamat email</span>
+            <label
+              className={`field ${dataLoading ? "settings-field-loading" : ""}`}
+            >
+              <span>Alamat email</span>
               <input
                 className="input-control"
                 type="email"
@@ -140,19 +168,25 @@ export function Settings() {
                 onChange={(e) => setEmail(e.target.value)}
               />
             </label>
-             <label className={`field ${dataLoading ? "settings-field-loading" : ""}`}>
-               <span>Mata uang bawaan</span>
+            <label
+              className={`field ${dataLoading ? "settings-field-loading" : ""}`}
+            >
+              <span>Mata uang bawaan</span>
               <input className="input-control" value="IDR (Rupiah)" disabled />
             </label>
-             <label className={`field ${dataLoading ? "settings-field-loading" : ""}`}>
-               <span>Zona waktu</span>
+            <label
+              className={`field ${dataLoading ? "settings-field-loading" : ""}`}
+            >
+              <span>Zona waktu</span>
               <input
                 className="input-control"
                 value={data.profile.timezone}
                 disabled
               />
             </label>
-             <Button type="submit" disabled={dataLoading || avatarLoading}>{dataLoading ? "Memuat data…" : "Simpan Profil"}</Button>
+            <Button type="submit" disabled={dataLoading || avatarLoading}>
+              {dataLoading ? "Memuat data…" : "Simpan Profil"}
+            </Button>
           </form>
         </Panel>
         <Panel className="panel-inner settings-side-panel">
@@ -175,53 +209,107 @@ export function Settings() {
               </div>
             </div>
             <div className="settings-summary-grid">
-              {dataLoading ? Array.from({ length: 4 }, (_, index) => (
-                <div className="settings-summary-skeleton" key={index}>
-                  <span />
-                  <strong />
-                </div>
-              )) : <>
-                <div>
-                  <span>Bergabung sejak</span>
-                  <strong>
-                    {data.profile.createdAt
-                      ? new Date(data.profile.createdAt).toLocaleDateString(
-                          "id-ID",
-                          { day: "2-digit", month: "short", year: "numeric" },
-                        )
-                      : "—"}
-                  </strong>
-                </div>
-                <div><span>Transaksi tercatat</span><strong>{data.transactions.length}</strong></div>
-                <div><span>Dompet aktif</span><strong>{data.wallets.filter((wallet) => wallet.status === "ACTIVE").length}</strong></div>
-                <div><span>Budget aktif</span><strong>{data.budgets.filter((budget) => budget.month === new Date().getMonth() + 1 && budget.year === new Date().getFullYear()).length}</strong></div>
-              </>}
+              {dataLoading ? (
+                Array.from({ length: 4 }, (_, index) => (
+                  <div className="settings-summary-skeleton" key={index}>
+                    <span />
+                    <strong />
+                  </div>
+                ))
+              ) : (
+                <>
+                  <div>
+                    <span>Bergabung sejak</span>
+                    <strong>
+                      {data.profile.createdAt
+                        ? new Date(data.profile.createdAt).toLocaleDateString(
+                            "id-ID",
+                            { day: "2-digit", month: "short", year: "numeric" },
+                          )
+                        : "—"}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Transaksi tercatat</span>
+                    <strong>{data.transactions.length}</strong>
+                  </div>
+                  <div>
+                    <span>Dompet aktif</span>
+                    <strong>
+                      {
+                        data.wallets.filter(
+                          (wallet) => wallet.status === "ACTIVE",
+                        ).length
+                      }
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Budget aktif</span>
+                    <strong>
+                      {
+                        data.budgets.filter(
+                          (budget) =>
+                            budget.month === new Date().getMonth() + 1 &&
+                            budget.year === new Date().getFullYear(),
+                        ).length
+                      }
+                    </strong>
+                  </div>
+                </>
+              )}
             </div>
           </div>
-          <div className={`settings-info-list ${dataLoading ? "settings-info-loading" : ""}`}>
-            {dataLoading ? Array.from({ length: 3 }, (_, index) => (
-              <div className="settings-info-row settings-info-skeleton" key={index}>
-                <span className="settings-info-icon" />
-                <div><strong /><p /></div>
-                <span />
-              </div>
-            )) : <>
-              <div className="settings-info-row">
-                <span className="settings-info-icon"><ShieldCheck size={16} /></span>
-                <div><strong>Keamanan akun</strong><p>Sesi login dan akses akun terlindungi.</p></div>
-                <span className="settings-status-dot">Aktif</span>
-              </div>
-              <div className="settings-info-row">
-                <span className="settings-info-icon"><RefreshCw size={16} /></span>
-                <div><strong>Sinkronisasi data</strong><p>Informasi terbaru siap digunakan.</p></div>
-                <span className="settings-status-dot">Terbaru</span>
-              </div>
-              <div className="settings-info-row">
-                <span className="settings-info-icon"><Bell size={16} /></span>
-                <div><strong>Notifikasi</strong><p>Pengingat budget dan transaksi berulang aktif.</p></div>
-                <span className="settings-status-dot">Aktif</span>
-              </div>
-            </>}
+          <div
+            className={`settings-info-list ${dataLoading ? "settings-info-loading" : ""}`}
+          >
+            {dataLoading ? (
+              Array.from({ length: 3 }, (_, index) => (
+                <div
+                  className="settings-info-row settings-info-skeleton"
+                  key={index}
+                >
+                  <span className="settings-info-icon" />
+                  <div>
+                    <strong />
+                    <p />
+                  </div>
+                  <span />
+                </div>
+              ))
+            ) : (
+              <>
+                <div className="settings-info-row">
+                  <span className="settings-info-icon">
+                    <ShieldCheck size={16} />
+                  </span>
+                  <div>
+                    <strong>Keamanan akun</strong>
+                    <p>Sesi login dan akses akun terlindungi.</p>
+                  </div>
+                  <span className="settings-status-dot">Aktif</span>
+                </div>
+                <div className="settings-info-row">
+                  <span className="settings-info-icon">
+                    <RefreshCw size={16} />
+                  </span>
+                  <div>
+                    <strong>Sinkronisasi data</strong>
+                    <p>Informasi terbaru siap digunakan.</p>
+                  </div>
+                  <span className="settings-status-dot">Terbaru</span>
+                </div>
+                <div className="settings-info-row">
+                  <span className="settings-info-icon">
+                    <Bell size={16} />
+                  </span>
+                  <div>
+                    <strong>Notifikasi</strong>
+                    <p>Pengingat budget dan transaksi berulang aktif.</p>
+                  </div>
+                  <span className="settings-status-dot">Aktif</span>
+                </div>
+              </>
+            )}
           </div>
           <div className="settings-reset-block">
             <button
@@ -233,7 +321,11 @@ export function Settings() {
                 setEmail(data.profile.email);
               }}
             >
-                <RefreshCw size={15} className={dataLoading ? "settings-refresh-spinning" : ""} /> {dataLoading ? "Memuat data…" : "Muat ulang data"}
+              <RefreshCw
+                size={15}
+                className={dataLoading ? "settings-refresh-spinning" : ""}
+              />{" "}
+              {dataLoading ? "Memuat data…" : "Muat ulang data"}
             </button>
             <button
               type="button"
