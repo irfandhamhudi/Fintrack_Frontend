@@ -1,4 +1,7 @@
 const API_URL = (import.meta.env.VITE_API_URL || "/api/v1").replace(/\/+$/, "");
+const TOKEN_KEY = "fintrack-access-token";
+export const setAccessToken = (token: string) => localStorage.setItem(TOKEN_KEY, token);
+export const clearAccessToken = () => localStorage.removeItem(TOKEN_KEY);
 
 type ApiEnvelope<T> = { success: boolean; message?: string; data: T };
 
@@ -8,6 +11,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     credentials: "include",
     headers: {
       ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
+      ...(localStorage.getItem(TOKEN_KEY) ? { Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}` } : {}),
       ...options.headers,
     },
   });
@@ -32,8 +36,8 @@ export const api = {
   auth: {
     me: () => request<{ user: { id: string; name: string; email: string; currency: "IDR"; timezone: string; avatarUrl?: string; createdAt?: string } }>("/auth/me"),
     updateMe: (body: { name?: string; email?: string; avatarUrl?: string }) => request<{ user: { id: string; name: string; email: string; avatarUrl?: string } }>("/auth/me", json("PATCH", body)),
-    login: (email: string, password: string) => request<{ user: { id: string; name: string; email: string; avatarUrl?: string } }>("/auth/login", json("POST", { email, password })),
-    register: (name: string, email: string, password: string) => request<{ user: { id: string; name: string; email: string; avatarUrl?: string } }>("/auth/register", json("POST", { name, email, password })),
+    login: (email: string, password: string) => request<{ user: { id: string; name: string; email: string; avatarUrl?: string }; token: string }>("/auth/login", json("POST", { email, password })),
+    register: (name: string, email: string, password: string) => request<{ user: { id: string; name: string; email: string; avatarUrl?: string }; token: string }>("/auth/register", json("POST", { name, email, password })),
     logout: () => request<null>("/auth/logout", json("POST")),
   },
   wallets: resource("wallets"),

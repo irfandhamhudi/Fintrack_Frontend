@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { api } from "../lib/api";
+import { api, clearAccessToken, setAccessToken } from "../lib/api";
 
 type Session = { id: string; name: string; email: string; avatarUrl?: string; createdAt?: string; expiresAt: number };
 type AuthContextValue = { user: Session | null; loading: boolean; login: (email: string, password: string) => Promise<string | null>; register: (name: string, email: string, password: string) => Promise<string | null>; logout: () => Promise<void> };
@@ -12,9 +12,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AuthContextValue>(() => ({
     user,
     loading,
-    async login(email, password) { try { const { user: current } = await api.auth.login(email, password); setUser({ ...current, expiresAt: Date.now() + 7 * 86400000 }); return null; } catch (error) { return error instanceof Error ? error.message : "Login gagal."; } },
-    async register(name, email, password) { try { const { user: current } = await api.auth.register(name, email, password); setUser({ ...current, expiresAt: Date.now() + 7 * 86400000 }); return null; } catch (error) { return error instanceof Error ? error.message : "Registrasi gagal."; } },
-    async logout() { await api.auth.logout().catch(() => undefined); setUser(null); },
+    async login(email, password) { try { const { user: current, token } = await api.auth.login(email, password); setAccessToken(token); setUser({ ...current, expiresAt: Date.now() + 7 * 86400000 }); return null; } catch (error) { return error instanceof Error ? error.message : "Login gagal."; } },
+    async register(name, email, password) { try { const { user: current, token } = await api.auth.register(name, email, password); setAccessToken(token); setUser({ ...current, expiresAt: Date.now() + 7 * 86400000 }); return null; } catch (error) { return error instanceof Error ? error.message : "Registrasi gagal."; } },
+    async logout() { await api.auth.logout().catch(() => undefined); clearAccessToken(); setUser(null); },
   }), [user, loading]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
