@@ -204,10 +204,11 @@ export function Shell() {
     const closeOnOutsidePress = (event: MouseEvent) => {
       const target = event.target as Node;
        if (!moreRef.current?.contains(target) && !mobileMoreRef.current?.contains(target)) setDropdown(false);
-      if (!popoversRef.current?.contains(target)) {
-        setSearchOpen(false);
-        setNotificationOpen(false);
-      }
+       if (!popoversRef.current?.contains(target)) {
+         setSearchOpen(false);
+         setNotificationOpen(false);
+         setAvatarOpen(false);
+       }
     };
     document.addEventListener("mousedown", closeOnOutsidePress, true);
     return () =>
@@ -612,10 +613,11 @@ export function Shell() {
                 <div className="avatar-mobile-popover">
                   <button
                     type="button"
-                    onClick={() => {
-                      setSearchOpen(true);
-                      setAvatarOpen(false);
-                    }}
+                     onClick={() => {
+                       setSearchOpen(true);
+                       setNotificationOpen(false);
+                       setAvatarOpen(false);
+                     }}
                   >
                     <Search size={16} /> Cari transaksi
                   </button>
